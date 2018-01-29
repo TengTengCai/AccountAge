@@ -93,6 +93,10 @@ public class AccountAge {
         rWorkBook = fileController.copyFile(mouldFilePath, outputFilePath); //复制模版文件
         cellStyle = rWorkBook.createCellStyle();                            //设置一个全局的数据格式
         XSSFDataFormat format = rWorkBook.createDataFormat();
+        cellStyle.setBorderTop(BorderStyle.THIN);
+        cellStyle.setBorderLeft(BorderStyle.THIN);
+        cellStyle.setBorderBottom(BorderStyle.THIN);
+        cellStyle.setBorderRight(BorderStyle.THIN);
         cellStyle.setDataFormat(format.getFormat("#,##0.00"));              //小数点后两位，千分格
         sList = new ArrayList<>();                                          //新建一个list对象，存储客户名称
         initCustomerList();             //初始化客户列表，和年份，项目名称
@@ -102,11 +106,11 @@ public class AccountAge {
 
         setFormula();                   //设置函数
         //设置边框
-        PropertyTemplate propertyTemplate = new PropertyTemplate();
-        propertyTemplate.drawBorders(new CellRangeAddress(4, rSheet.getLastRowNum() - 2, 0, sheetWidth),
-                BorderStyle.THIN, BorderExtent.ALL);
-        propertyTemplate.applyBorders(rSheet);
-//
+//        PropertyTemplate propertyTemplate = new PropertyTemplate();
+//        propertyTemplate.drawBorders(new CellRangeAddress(4, rSheet.getLastRowNum() - 2, 0, sheetWidth),
+//                BorderStyle.THIN, BorderExtent.ALL);
+//        propertyTemplate.applyBorders(rSheet);
+
         //设置自动宽度
         for (int i = 0; i < 18; i++) {
             rSheet.autoSizeColumn(i);
@@ -144,6 +148,7 @@ public class AccountAge {
             Cell cell = row.createCell(0);
             cell.setCellType(CellType.STRING);
             cell.setCellValue(sList.get(i).getStringCellValue());
+            cell.setCellStyle(cellStyle);
         }
 
         //初始化年份
