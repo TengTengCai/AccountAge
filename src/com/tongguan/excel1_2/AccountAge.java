@@ -24,11 +24,8 @@ public class AccountAge {
     private int sheetNumbers = 0;       //数据资源工作簿分页数量
     private int coordinateRuler = 0;    //标尺，不同的年份表格标尺不一样
     private int sheetWidth;             //表格宽度
-    private Method myMethod;           //方法类
     private List<Cell> sList;           //客户list列表
-    private List<Cell> listData;        //期末余额list列表
-    private List<DataBean> dataBeanList;//数据databean列表
-    Map<String, Double> sheetMap = new HashMap<>();
+    private Map<String, Double> sheetMap = new HashMap<>();
     private CellStyle cellStyle;        //单元格样式
     private boolean isReceivable = true;//应收为true 应付为false
     private String subjectName = "";    //项目名称，通过项目名称来判断应收，还是应付
@@ -97,17 +94,13 @@ public class AccountAge {
         cellStyle = rWorkBook.createCellStyle();                            //设置一个全局的数据格式
         XSSFDataFormat format = rWorkBook.createDataFormat();
         cellStyle.setDataFormat(format.getFormat("#,##0.00"));              //小数点后两位，千分格
-        myMethod = new Method();                                           //新建一个常用发方法对象
         sList = new ArrayList<>();                                          //新建一个list对象，存储客户名称
         initCustomerList();             //初始化客户列表，和年份，项目名称
-        //这是之前javaBean的方式
-//         getData();                      //获取数据
-//         putData();                      //输入数据到结果表中
-        getDataToMap();
-        putDataFromMap();
+
+        getDataToMap();                 //获取数据
+        putDataFromMap();               //输入数据
 
         setFormula();                   //设置函数
-//
         //设置边框
         PropertyTemplate propertyTemplate = new PropertyTemplate();
         propertyTemplate.drawBorders(new CellRangeAddress(4, rSheet.getLastRowNum() - 2, 0, sheetWidth),
@@ -133,7 +126,7 @@ public class AccountAge {
     private void initCustomerList() {
         //获取客户列表
         XSSFSheet sSheet = sWorkBook.getSheetAt(sheetNumbers - 1);
-        sList = myMethod.getColumnWithCol(sSheet, 0);
+        sList = getColumnWithCol(sSheet, 0);
         sList.remove(0);
         for (Cell cell : sList) {
             if (cell != null) {
@@ -180,6 +173,9 @@ public class AccountAge {
         }
     }
 
+    /**
+     * 获取数据存到HashMap中
+     */
     private void getDataToMap() {
         int sheetId = 0;
         for (Sheet sheet : sWorkBook) {
@@ -218,31 +214,8 @@ public class AccountAge {
     }
 
     /**
-     * 获取数据到dataBean组成的List中
+     * 把HashMap的数据输入数据到表格中
      */
-    private void getData() {
-        //获取对应的数据
-//        System.out.println(sList.size());
-        int sheetId = 0;
-        dataBeanList = new ArrayList<>();
-        for (Sheet sheet : sWorkBook) {
-            for (Cell customerCell : sList) {
-                customerCell.setCellType(CellType.STRING);
-                String customer = customerCell.getStringCellValue();
-                if (sheetId == 0) {
-                    addDataBeanToList(sheet, customer, dataBeanList, "期初余额");
-                } else if (sheetId == sheetNumbers - 1) {
-//                    addDataBeanToList(sheet,customer,dataBeanList,"期末余额");
-                    listData = myMethod.getColumnWithCol(sheet, 6);
-                }
-                addDataBeanToList(sheet, customer, dataBeanList, "本年借方");
-                addDataBeanToList(sheet, customer, dataBeanList, "本年贷方");
-            }
-            sheetId++;
-        }
-        listData.remove(0);
-    }
-
     private void putDataFromMap(){
         Row yearRow = rSheet.getRow(4);
         Row titleRow = rSheet.getRow(5);
@@ -266,39 +239,6 @@ public class AccountAge {
         }
     }
 
-    /**
-     * 将数据输入到对应表格的位置上
-     */
-    private void putData() {
-        //将对应的数据提取出来，获取到文件中
-        for (DataBean dataBean : dataBeanList) {
-
-            String title;
-
-            switch (dataBean.getTitleName().trim()) {
-                case "本年借方":
-                    title = "借方金额";
-                    break;
-                case "本年贷方":
-                    title = "贷方金额";
-                    break;
-                default:
-                    title = dataBean.getTitleName().trim();
-                    break;
-            }
-
-            Cell test = myMethod.selectCellByCustomerTitleYear(rSheet, dataBean.getCustomer(), title, dataBean.getYear());
-
-            if (dataBean.isError()) {
-                test.setCellValue(dataBean.getError());
-            } else {
-                double data = dataBean.getValue();
-                test.setCellStyle(cellStyle);
-                test.setCellValue(data);
-            }
-//            System.out.println(dataBean.getYear() + "年," + "客户：" + dataBean.getCustomer() + "标题：" + dataBean.getTitleName() + "数值：" + dataBean.getValue());
-        }
-    }
 
     /**
      * 将函数设置到对应的单元格中
@@ -566,39 +506,6 @@ public class AccountAge {
         }
     }
 
-    /**
-     * 添加DataBean到List中，数据如果有误，输入错误提示信息
-     *
-     * @param sheet        操作的分页
-     * @param customer     客户名称
-     * @param dataBeanList 添加对应的List对象
-     * @param title        标题
-     */
-    private void addDataBeanToList(Sheet sheet, String customer, List<DataBean> dataBeanList, String title) {
-        Cell itemCell = myMethod.selectCellByCustomerAndTitle(sheet, customer, title);
-        DataBean dataBean = null;
-        double item;
-        if (itemCell != null) {
-            CellType cellType = itemCell.getCellTypeEnum();
-            switch (cellType) {
-                case STRING:
-                    String error = "数据有误";
-                    dataBean = new DataBean(customer, title, sheet.getSheetName(), error);
-                    break;
-                case NUMERIC:
-                    item = itemCell.getNumericCellValue();
-                    dataBean = new DataBean(customer, title, sheet.getSheetName(), item);
-                    break;
-                case BLANK:
-                    String blank = "单元格为空";
-                    dataBean = new DataBean(customer, title, sheet.getSheetName(), blank);
-                default:
-                    break;
-            }
-            dataBeanList.add(dataBean);
-        }
-    }
-
     //一系列变量的set和get函数
     public void setSubjectName(String subjectName) {
         this.subjectName = subjectName;
@@ -622,5 +529,29 @@ public class AccountAge {
 
     public void setOutputFilePath(String outputFilePath) {
         this.outputFilePath = outputFilePath;
+    }
+
+    private List<Cell> getColumnWithCol(Sheet sheet, int col) {
+        List<Cell> sheetCol = new ArrayList<>();
+        for (Row row : sheet) {
+            Cell cell = row.getCell(col);
+            if (cell != null) {
+                CellType cellType = cell.getCellTypeEnum();
+                switch (cellType) {
+                    case STRING:
+                        String str = cell.getStringCellValue();
+                        if (!str.isEmpty()) {
+                            sheetCol.add(cell);
+                        }
+                        break;
+                    case NUMERIC:
+                        sheetCol.add(cell);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        return sheetCol;
     }
 }
