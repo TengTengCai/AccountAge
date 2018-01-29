@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="poi-3">
+    <CLASSES>
+      <root url="file://E:/tools/poi-3.17" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="file://E:/tools/poi-3.17/docs/apidocs" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ideaLibSources/poi-3.17-sources.jar!/" />
+      <root url="jar://$USER_HOME$/.ideaLibSources/poi-ooxml-3.17-sources.jar!/" />
+    </SOURCES>
+    <jarDirectory url="file://E:/tools/poi-3.17" recursive="false" />
+  </library>
+</component>
